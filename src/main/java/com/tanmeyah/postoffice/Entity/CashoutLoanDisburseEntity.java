@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CashoutLoanDisburse {
+public class CashoutLoanDisburseEntity {
 
     @Id
     @Column(name = "DRC")

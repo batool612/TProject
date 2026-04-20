@@ -10,30 +10,28 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface CashoutLoanDisburseRepository extends JpaRepository<CashoutLoanDisburseEntity, Long> {
-
-    @Query(value = """
-    select
-        ac.IDNO as idno,
-        ac.MOBILEPHONE as mobilephone,
-        c.FullNAME as fullname,
-        ac.DRC as drc,
-        ac.TOTAL_AMT as totalAmt
-    from APIS_CASHOUT_LOAN_DISBURSE ac
-    join micro_services ms on ac.drc = ms.SERVICE_ID
-    join customers c on ms.cust_id = c.id_number
-    where ms.STATUS = :status
-      and ac.DISBURSE_TYPE_CODE = :disburseType
-      and ac.PROVIDER_CODE = :providerCode
+public interface CashoutLoanDisburseRepository extends JpaRepository<CashoutLoanDisburseEntity, String> {
+    @Query("""
+    select 
+        ac.idno as idno,
+        ac.mobilephone as mobilephone,
+        c.fullName as fullname,
+        ac.drc as drc,
+        ac.totalAmt as totalAmt
+    from CashoutLoanDisburseEntity ac
+    join MicroServiceEntity ms on ac.drc = ms.serviceId
+    join CustomerEntity c on ms.custId = c.idNumber
+    where ms.status = :status
+      and ac.disburseTypeCode = :disburseType
+      and ac.providerCode = :providerCode
       and ac.idno = :nid
       and ac.flag = :flag
-""", nativeQuery = true)
+""")
     Optional<InquiryProjection> findValidInquiry(
-            @Param("nid") String nid,
-            @Param("status") Integer status,
-            @Param("disburseType") Integer disburseType,
-            @Param("providerCode") Integer providerCode,
-            @Param("flag") Integer flag
+            String nid,
+            Integer status,
+            Integer disburseType,
+            Integer providerCode,
+            Integer flag
     );
 }
-

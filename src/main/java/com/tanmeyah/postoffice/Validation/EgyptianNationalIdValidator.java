@@ -2,7 +2,10 @@ package com.tanmeyah.postoffice.Validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class EgyptianNationalIdValidator implements ConstraintValidator<ValidEgyptianNationalId, String> {
 
     private static final String REGEX =

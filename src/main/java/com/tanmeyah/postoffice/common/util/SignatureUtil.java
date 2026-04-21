@@ -10,27 +10,43 @@ public final class SignatureUtil {
         throw new UnsupportedOperationException("Cannot instantiate utility class");
     }
 
-    /**
-     * Generates API signature:
-     * RqUID + NID + SenderCode + SecurityKey
-     * then SHA-256 + Base64
-     */
-    public static String generateSignature(String rqUID,
-                                           String nid,
-                                           String senderCode,
-                                           String securityKey) {
+    public static String generateInquiryRequestSignature(String rqUID,
+                                                         String nid,
+                                                         String senderCode,
+                                                         String securityKey) {
+        return generateFromParts(securityKey, rqUID, nid, senderCode);
+    }
 
+    public static String generateInquiryResponseSignature(String rqUID,
+                                                          String nid,
+                                                          Integer statusCode,
+                                                          String securityKey) {
+        return generateFromParts(securityKey, rqUID, nid, statusCode == null ? null : String.valueOf(statusCode));
+    }
+
+    /**
+     * Backward-compatible generic signature method.
+     */
+    public static String generateSignature(String first,
+                                           String second,
+                                           String third,
+                                           String securityKey) {
+        return generateFromParts(securityKey, first, second, third);
+    }
+
+    private static String generateFromParts(String securityKey, String... parts) {
         StringBuilder sb = new StringBuilder();
 
-        // Append in strict order with trim
-        if (rqUID != null) sb.append(rqUID.trim());
-        if (nid != null) sb.append(nid.trim());
-        if (senderCode != null) sb.append(senderCode.trim());
+        if (parts != null) {
+            for (String part : parts) {
+                if (part != null) {
+                    sb.append(part.trim());
+                }
+            }
+        }
         if (securityKey != null) sb.append(securityKey.trim());
 
-        String rawString = sb.toString();
-
-        return sha256Base64(rawString);
+        return sha256Base64(sb.toString());
     }
 
     /**

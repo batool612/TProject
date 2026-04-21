@@ -21,8 +21,3 @@ public interface DigitalPaymentsConfigurationRepository
             Integer providerCode
     );
 }
-
-/////// how to call
-
-//List<DigitalPaymentConfigurationProjection> configs =
-//        repository.findByOperationTypeAndProviderCode(2, 7);

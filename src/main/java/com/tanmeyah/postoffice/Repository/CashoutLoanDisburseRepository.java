@@ -19,7 +19,7 @@ public interface CashoutLoanDisburseRepository extends JpaRepository<CashoutLoan
         ac.drc as drc,
         ac.totalAmt as totalAmt
     from CashoutLoanDisburseEntity ac
-    join MicroServiceEntity ms on ac.drc = ms.serviceId
+    join MicroServiceEntity ms on ac.drc = str(ms.id.serviceId)
     join CustomerEntity c on ms.custId = c.idNumber
     where ms.status = :status
       and ac.disburseTypeCode = :disburseType

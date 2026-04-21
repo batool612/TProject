@@ -3,14 +3,7 @@ spring:
     name: postoffice
 
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ""
-
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.H2Dialect
+    url: jdbc:oracle:thin:@//192.168.51.198:1521/fusion
+    username: MC_MASTER
+    password: MC_MASTER
 

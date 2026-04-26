@@ -2,7 +2,7 @@ package com.tanmeyah.postoffice.Service;
 
 import com.tanmeyah.postoffice.DTO.Requests.InquiryRequestDTO;
 import com.tanmeyah.postoffice.DTO.Reponses.InquiryResponseDTO;
-import com.tanmeyah.postoffice.Projection.InquiryProjection;
+import com.tanmeyah.postoffice.DTO.Projection.InquiryProjection;
 import com.tanmeyah.postoffice.Repository.CashoutLoanDisburseRepository;
 import com.tanmeyah.postoffice.Repository.DigitalPaymentsConfigurationRepository;
 import com.tanmeyah.postoffice.Validation.EgyptianNationalIdValidator;
@@ -54,22 +54,16 @@ public class AppServicelmp1 implements AppService {
             return buildResponse(reqUID, nid, null, null, InquiryStatus.AUTH_ERROR, null);
         }
 
-        if (!configuredSenderCode.equals(senderCode)) {
-            return buildResponse(reqUID, nid, null, null, InquiryStatus.INVALID_SENDER, securityKey);
-        }
 
         if (!isValidNid(nid)) {
             return buildResponse(reqUID, nid, null, null, InquiryStatus.INVALID_NID_FORMAT, securityKey);
         }
 
-        if (!isValidRequestSignature(reqUID, nid, senderCode, requestSignature, securityKey)) {
-            return buildResponse(reqUID, nid, null, null, InquiryStatus.AUTH_ERROR, securityKey);
-        }
-
-        String expectedRequestSignature = SignatureUtil.generateSignature(reqUID, nid, senderCode, securityKey);
+        String expectedRequestSignature = SignatureUtil.generateInquiryRequestSignature(reqUID, nid, senderCode, securityKey);
         if (!expectedRequestSignature.equals(requestSignature)) {
             return buildResponse(reqUID, nid, null, null, InquiryStatus.AUTH_ERROR, securityKey);
         }
+
 
         Optional<InquiryProjection> inquiryResult = cashoutLoanDisburseRepository.findValidInquiry(
                 nid,
@@ -79,11 +73,12 @@ public class AppServicelmp1 implements AppService {
                 DbConstants.FLAG_ACTIVE
         );
 
+
         if (inquiryResult.isEmpty()) {
             return buildResponse(reqUID, nid, null, null, InquiryStatus.NID_NOT_FOUND, securityKey);
         }
-
         InquiryProjection projection = inquiryResult.get();
+
         if (projection.getTotalAmt() == null || projection.getTotalAmt() <= 0) {
             return buildResponse(reqUID, nid, null, null, InquiryStatus.NOT_ALLOWED, securityKey);
         }

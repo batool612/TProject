@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "micro_services")
+@Table(name = "MICRO_SERVICES")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "APIS_DIGITAL_PAYMENTS_CONFIGURATION")
+//@Table(name = "APIS_DIGITAL_PAYMENTS_CONFIGURATION")
+@Table(name = "APIS_DIGITAL_PAYMENTS_CONFIGURATION", schema = "MC_APIS")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,12 +26,6 @@ public class DigitalPaymentsConfigurationEntity {
 
     @Column(name = "\"VALUE\"")
     private String configValue;
-//
-//    @Column(name = "KEY")
-//    private String configKey;
-//
-//    @Column(name = "VALUE")
-//    private String configValue;
 
     @Column(name = "OPERATION_TYPE")
     private Integer operationType;

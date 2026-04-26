@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "APIS_CASHOUT_LOAN_DISBURSE")
+@Table(name = "APIS_CASHOUT_LOAN_DISBURSE" ,schema = "MC_APIS")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +19,7 @@ public class CashoutLoanDisburseEntity {
 
     @Id
     @Column(name = "DRC")
-    private String drc;
+    private Integer drc;
 
     @Column(name = "IDNO")
     private String idno;

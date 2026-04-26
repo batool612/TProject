@@ -1,12 +1,22 @@
 package com.tanmeyah.postoffice.DTO.Reponses;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
-import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Data
+@Getter
 @Builder
+@JsonPropertyOrder({
+        "ReqUID",
+        "CustomerName",
+        "NID",
+        "Amount",
+        "StatusCode",
+        "StatusDesc",
+        "Signature"
+})
 public class InquiryResponseDTO {
     @JsonProperty("ReqUID")
     private String reqUID;

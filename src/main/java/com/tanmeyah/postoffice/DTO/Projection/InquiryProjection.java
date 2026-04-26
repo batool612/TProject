@@ -1,9 +1,9 @@
-package com.tanmeyah.postoffice.Projection;
+package com.tanmeyah.postoffice.DTO.Projection;
 
 public interface InquiryProjection {
     String getIdno();
     String getMobilephone();
     String getFullname();
-    String getDrc();
+    Integer getDrc();
     Double getTotalAmt();
 }

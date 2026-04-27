@@ -4,9 +4,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-public final class SignatureUtil {
+public final class InquirySignatureUtil {
 
-    private SignatureUtil() {
+    private InquirySignatureUtil() {
         throw new UnsupportedOperationException("Cannot instantiate utility class");
     }
 
@@ -24,15 +24,6 @@ public final class SignatureUtil {
         return generateFromParts(securityKey, rqUID, nid, statusCode == null ? null : String.valueOf(statusCode));
     }
 
-    /**
-     * Backward-compatible generic signature method.
-     */
-    public static String generateSignature(String first,
-                                           String second,
-                                           String third,
-                                           String securityKey) {
-        return generateFromParts(securityKey, first, second, third);
-    }
 
     private static String generateFromParts(String securityKey, String... parts) {
         StringBuilder sb = new StringBuilder();

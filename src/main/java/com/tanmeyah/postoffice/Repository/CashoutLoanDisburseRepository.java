@@ -37,4 +37,19 @@ public interface CashoutLoanDisburseRepository extends JpaRepository<CashoutLoan
             @Param("providerCode") Integer providerCode,
             @Param("flag") Integer flag
     );
+
+    Optional<CashoutLoanDisburseEntity> findByIdnoAndDisburseTypeCodeAndProviderCodeAndFlag(
+            String idno,
+            Integer disburseTypeCode,
+            Integer providerCode,
+            Integer flag
+    );
+
+    boolean existsByIdnoAndDisburseTypeCodeAndProviderCodeAndTotalAmtAndFlag(
+            String idno,
+            Integer disburseTypeCode,
+            Integer providerCode,
+            Double totalAmt,
+            Integer flag
+    );
 }

@@ -1,7 +1,9 @@
 package com.tanmeyah.postoffice.Controller;
 
+import com.tanmeyah.postoffice.DTO.Reponses.PaymentNotificationResponseDTO;
 import com.tanmeyah.postoffice.DTO.Requests.InquiryRequestDTO;
 import com.tanmeyah.postoffice.DTO.Reponses.InquiryResponseDTO;
+import com.tanmeyah.postoffice.DTO.Requests.PaymentNotificationRequestDTO;
 import com.tanmeyah.postoffice.Service.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,4 +23,13 @@ public class AppController {
     public ResponseEntity<InquiryResponseDTO> inquiry(@Valid @RequestBody InquiryRequestDTO request) {
         return ResponseEntity.ok(appService.processInquiry(request));
     }
+
+    @PostMapping("/payment-notification")
+    public ResponseEntity<PaymentNotificationResponseDTO> paymentNotification (@Valid @RequestBody PaymentNotificationRequestDTO request){
+        return ResponseEntity.ok(appService.processPaymentNotification((request)));
+    }
+
+
+
+
 }

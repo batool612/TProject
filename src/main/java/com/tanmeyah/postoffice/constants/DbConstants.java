@@ -11,4 +11,7 @@ public final class DbConstants {
     public static final int OPERATION_TYPE_CASHOUT = 2;
 
 
+    public static final int FLAG_PAYMENT_NOTIFIED =2;
+
+
 }

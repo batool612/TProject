@@ -12,7 +12,8 @@ public class InquiryRequestDTO {
     private String reqUID;
 
     @NotBlank
-    @ValidEgyptianNationalId
+    //Spring validation runs before your controller
+   // @ValidEgyptianNationalId
     @JsonProperty("NID")
     private String nid;
 

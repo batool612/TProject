@@ -3,10 +3,12 @@ package com.tanmeyah.postoffice.Repository;
 import com.tanmeyah.postoffice.Entity.CashoutLoanDisburseEntity;
 import com.tanmeyah.postoffice.DTO.Projection.InquiryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Repository
@@ -38,18 +40,33 @@ public interface CashoutLoanDisburseRepository extends JpaRepository<CashoutLoan
             @Param("flag") Integer flag
     );
 
-    Optional<CashoutLoanDisburseEntity> findByIdnoAndDisburseTypeCodeAndProviderCodeAndFlag(
+
+    @Modifying
+    @Query("""
+        update CashoutLoanDisburseEntity ac
+           set ac.flag = :newFlag,
+               ac.notifyFptn = :trxUID
+         where ac.drc = :drc
+           and ac.flag = :currentFlag
+    """)
+    int updateNotificationStatusByDrc(
+            @Param("drc") Integer drc,
+            @Param("trxUID") String trxUID,
+            @Param("currentFlag") Integer currentFlag,
+            @Param("newFlag") Integer newFlag
+    );
+
+    boolean existsByNotifyFptn(String trxUID);
+
+
+    boolean existsByIdnoAndDisburseTypeCodeAndProviderCodeAndTotalAmtAndNotifyFptnAndFlag(
             String idno,
             Integer disburseTypeCode,
             Integer providerCode,
+            BigDecimal totalAmt,
+            String notifyFptn,
             Integer flag
     );
 
-    boolean existsByIdnoAndDisburseTypeCodeAndProviderCodeAndTotalAmtAndFlag(
-            String idno,
-            Integer disburseTypeCode,
-            Integer providerCode,
-            Double totalAmt,
-            Integer flag
-    );
+
 }

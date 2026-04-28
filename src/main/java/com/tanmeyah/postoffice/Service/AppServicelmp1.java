@@ -5,7 +5,6 @@ import com.tanmeyah.postoffice.DTO.Requests.InquiryRequestDTO;
 import com.tanmeyah.postoffice.DTO.Reponses.InquiryResponseDTO;
 import com.tanmeyah.postoffice.DTO.Projection.InquiryProjection;
 import com.tanmeyah.postoffice.DTO.Requests.PaymentNotificationRequestDTO;
-import com.tanmeyah.postoffice.Entity.CashoutLoanDisburseEntity;
 import com.tanmeyah.postoffice.Repository.CashoutLoanDisburseRepository;
 import com.tanmeyah.postoffice.Repository.DigitalPaymentsConfigurationRepository;
 import com.tanmeyah.postoffice.Validation.EgyptianNationalIdValidator;
@@ -15,10 +14,13 @@ import com.tanmeyah.postoffice.common.util.PaymentNotificationSignatureUtil;
 import com.tanmeyah.postoffice.constants.DbConstants;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.tanmeyah.postoffice.constants.DbConstants.*;
 
 
 @Service
@@ -43,7 +45,7 @@ public class AppServicelmp1 implements AppService {
         String requestSignature = trim(request.getSignature());
 
         Map<String, String> configMap = digitalPaymentsConfigurationRepository
-                .findByOperationTypeAndProviderCode(DbConstants.OPERATION_TYPE_CASHOUT, DbConstants.PROVIDER_POST_OFFICE)
+                .findByOperationTypeAndProviderCode(OPERATION_TYPE_CASHOUT, DbConstants.PROVIDER_POST_OFFICE)
                 .stream()
                 .collect(Collectors.toMap(
                         c -> normalizeKey(c.getConfigKey()),
@@ -58,7 +60,7 @@ public class AppServicelmp1 implements AppService {
             return buildResponse(reqUID, nid, null, null, Status.AUTH_ERROR, null);
         }
 
-        if (!isValidNid(nid)) {
+        if (isInvalidNid(nid)) {
             return buildResponse(reqUID, nid, null, null, Status.INVALID_NID_FORMAT, securityKey);
         }
 
@@ -80,33 +82,19 @@ public class AppServicelmp1 implements AppService {
         }
         InquiryProjection projection = inquiryResult.get();
 
-        if (projection.getTotalAmt() == null || projection.getTotalAmt() <= 0) {
+        if (projection.getTotalAmt() == null || projection.getTotalAmt().compareTo(BigDecimal.ZERO) <= 0) {
             return buildResponse(reqUID, nid, null, null, Status.NOT_ALLOWED, securityKey);
         }
 
         return buildResponse(reqUID, nid, projection.getFullName(), projection.getTotalAmt(), Status.SUCCESS, securityKey);
     }
 
-    private InquiryResponseDTO buildResponse(String reqUID,
-                                             String nid,
-                                             String customerName,
-                                             Double amount,
-                                             Status status,
-                                             String securityKey) {
-        return InquiryResponseDTO.builder()
-                .reqUID(reqUID)
-                .customerName(customerName)
-                .nid(nid)
-                .amount(amount)
-                .statusCode(status.getCode())
-                .statusDesc(status.getDescription())
-                .signature(InquirySignatureUtil.generateInquiryResponseSignature(reqUID, nid, status.getCode(), securityKey))
-                .build();
-    }
 
-
-
+    @Transactional
+    @Override
     public PaymentNotificationResponseDTO processPaymentNotification(PaymentNotificationRequestDTO request) {
+
+
         if (request == null) {
             return buildPaymentNotificationResponse(null, null, Status.AUTH_ERROR, null);
         }
@@ -119,7 +107,7 @@ public class AppServicelmp1 implements AppService {
         String requestSignature = trim(request.getSignature());
 
         Map<String, String> configMap = digitalPaymentsConfigurationRepository
-                .findByOperationTypeAndProviderCode(DbConstants.OPERATION_TYPE_CASHOUT, DbConstants.PROVIDER_POST_OFFICE)
+                .findByOperationTypeAndProviderCode(OPERATION_TYPE_CASHOUT, PROVIDER_POST_OFFICE)
                 .stream()
                 .collect(Collectors.toMap(
                         c -> normalizeKey(c.getConfigKey()),
@@ -134,24 +122,14 @@ public class AppServicelmp1 implements AppService {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.AUTH_ERROR, null);
         }
 
-        if (!isValidNid(nid)) {
+        if (isInvalidNid(nid)) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.INVALID_NID_FORMAT, securityKey);
-        }
-        String expectedRequestSignature = PaymentNotificationSignatureUtil.generatePaymentNotificationRequestSignature(
-                reqUID,
-                nid,
-                senderCode,
-                amount,
-                trxUID,
-                securityKey
-        );
-        if (!expectedRequestSignature.equals(requestSignature)) {
-            return buildPaymentNotificationResponse(reqUID, trxUID, Status.AUTH_ERROR, securityKey);
         }
 
         if (!configuredSenderCode.equals(senderCode)) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.INVALID_SENDER, securityKey);
         }
+
 
 
         Optional<InquiryProjection> readyForDisbursement =
@@ -167,48 +145,79 @@ public class AppServicelmp1 implements AppService {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.NOT_ALLOWED, securityKey);
         }
 
-        Double requestAmount;
+        BigDecimal requestAmount;
         try {
-            requestAmount = Double.valueOf(amount);
+            requestAmount = new BigDecimal(amount);
         } catch (NumberFormatException ex) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.INVALID_AMOUNT, securityKey);
         }
 
         InquiryProjection projection = readyForDisbursement.get();
-        if (projection.getTotalAmt() == null || Double.compare(projection.getTotalAmt(), requestAmount) != 0) {
+        if (projection.getTotalAmt() == null || projection.getTotalAmt().compareTo(requestAmount) != 0) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.INVALID_AMOUNT, securityKey);
         }
 
+        if (cashoutLoanDisburseRepository.existsByNotifyFptn(trxUID)) {
+            return buildPaymentNotificationResponse(reqUID, trxUID, Status.NOT_ALLOWED, securityKey);
+        }
 
-        boolean duplicateTransaction = cashoutLoanDisburseRepository.existsByIdnoAndDisburseTypeCodeAndProviderCodeAndTotalAmtAndFlag(
-                nid,
-                DbConstants.DISBURSE_TYPE_CASHOUT,
-                DbConstants.PROVIDER_POST_OFFICE,
-                requestAmount,
-                DbConstants.FLAG_PAYMENT_NOTIFIED
-        );
+        boolean duplicateTransaction = cashoutLoanDisburseRepository
+                .existsByIdnoAndDisburseTypeCodeAndProviderCodeAndTotalAmtAndNotifyFptnAndFlag(
+                        nid,
+                        DbConstants.DISBURSE_TYPE_CASHOUT,
+                        DbConstants.PROVIDER_POST_OFFICE,
+                        requestAmount,
+                        trxUID,
+                        DbConstants.FLAG_PAYMENT_NOTIFIED
+                );
         if (duplicateTransaction) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.NOT_ALLOWED, securityKey);
         }
 
-        Optional<CashoutLoanDisburseEntity> entityOptional =
-                cashoutLoanDisburseRepository.findByIdnoAndDisburseTypeCodeAndProviderCodeAndFlag(
-                        nid,
-                        DbConstants.DISBURSE_TYPE_CASHOUT,
-                        DbConstants.PROVIDER_POST_OFFICE,
-                        DbConstants.FLAG_ACTIVE
-                );
-        if (entityOptional.isEmpty()) {
+
+        int updatedRows = cashoutLoanDisburseRepository.updateNotificationStatusByDrc(
+                projection.getDrc(),
+                trxUID,
+                DbConstants.FLAG_ACTIVE,
+                DbConstants.FLAG_PAYMENT_NOTIFIED
+        );
+
+        if (updatedRows == 0) {
             return buildPaymentNotificationResponse(reqUID, trxUID, Status.NOT_ALLOWED, securityKey);
         }
-
-        CashoutLoanDisburseEntity entity = entityOptional.get();
-        entity.setFlag(DbConstants.FLAG_PAYMENT_NOTIFIED);
-        cashoutLoanDisburseRepository.save(entity);
 
         return buildPaymentNotificationResponse(reqUID, trxUID, Status.SUCCESS, securityKey);
 
     }
+
+
+    private String trim(String value) {
+        return value == null ? "" : value.trim();
+    }
+    private boolean isInvalidNid(String nid) {
+        return !egyptianNationalIdValidator.isValid(nid, null);
+    }
+    private String normalizeKey(String key) {
+        return trim(key).toUpperCase();
+    }
+
+    private InquiryResponseDTO buildResponse(String reqUID,
+                                             String nid,
+                                             String customerName,
+                                             BigDecimal amount,
+                                             Status status,
+                                             String securityKey) {
+        return InquiryResponseDTO.builder()
+                .reqUID(reqUID)
+                .customerName(customerName)
+                .nid(nid)
+                .amount(amount)
+                .statusCode(status.getCode())
+                .statusDesc(status.getDescription())
+                .signature(InquirySignatureUtil.generateInquiryResponseSignature(reqUID, nid, status.getCode(), securityKey))
+                .build();
+    }
+
     private PaymentNotificationResponseDTO buildPaymentNotificationResponse(String reqUID,
                                                                             String trxUID,
                                                                             Status status,
@@ -227,16 +236,4 @@ public class AppServicelmp1 implements AppService {
                 .build();
     }
 
-
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
-    }
-
-    private boolean isValidNid(String nid) {
-        return egyptianNationalIdValidator.isValid(nid, null);
-    }
-    private String normalizeKey(String key) {
-        return trim(key).toUpperCase();
-    }
 }

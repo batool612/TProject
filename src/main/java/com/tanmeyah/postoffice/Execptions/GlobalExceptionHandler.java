@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -51,9 +52,6 @@ public class GlobalExceptionHandler {
                 fieldErrors
         );
     }
-
-
-
 
     // ================= VALIDATION (PARAMS) =================
 
@@ -167,6 +165,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // ================= DUPLICATE =================
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+
+        log.warn("Database constraint violation", ex);
+
+        return build(
+                HttpStatus.CONFLICT,
+                "DUPLICATE_TRANSACTION",
+                "Duplicate transaction detected or constraint violation",
+                null
+        );
+    }
     // ================= HELPER =================
 
 private ResponseEntity<ApiErrorResponse> build(HttpStatus status,

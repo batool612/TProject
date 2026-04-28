@@ -5,6 +5,8 @@ import lombok.Builder;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Builder
@@ -25,7 +27,7 @@ public class InquiryResponseDTO {
     @JsonProperty("NID")
     private String nid;
     @JsonProperty("Amount")
-    private Double amount;  //only if success
+    private BigDecimal amount;  //only if success
     @JsonProperty("StatusCode")
     private Integer statusCode;
     @JsonProperty("StatusDesc")

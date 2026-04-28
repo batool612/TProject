@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "APIS_CASHOUT_LOAN_DISBURSE" ,schema = "MC_APIS")
 @Getter
@@ -28,7 +30,7 @@ public class CashoutLoanDisburseEntity {
     private String mobilephone;
 
     @Column(name = "TOTAL_AMT")
-    private Double totalAmt;
+    private BigDecimal totalAmt;
 
     @Column(name = "DISBURSE_TYPE_CODE")
     private Integer disburseTypeCode;
@@ -38,4 +40,7 @@ public class CashoutLoanDisburseEntity {
 
     @Column(name = "FLAG")
     private Integer flag;
+
+    @Column(name = "NOTIFY_FPTN")
+    private String notifyFptn;
 }
